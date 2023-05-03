@@ -1,0 +1,41 @@
+name: ml-pipeline-visualization-server
+base: ubuntu:22.04
+version: '0.1'
+summary: ml-pipeline/visualization-server
+description: |
+    ml-pipeline/visualization-server
+    https://github.com/kubeflow/pipelines/tree/master/backend
+license: GPL-3.0
+platforms:
+    amd64:
+
+services:
+  vis-server:
+    override: replace
+    command: python3 server.py
+
+parts:
+  gcloud:
+    plugin: nil
+    overlay-packages:
+      - wget
+      - curl
+      - tar
+      - openssl
+    overlay-script: |
+      set -x
+      curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
+      mkdir -p /usr/local/gcloud
+      tar -C /usr/local/gcloud -xf /tmp/google-cloud-sdk.tar.gz
+      /usr/local/gcloud/google-cloud-sdk/install.sh
+
+  visualization:
+    plugin: python
+    python-packages:
+      - tensorflow
+    python-requirements:
+      - requirements.txt
+    after:
+      - gcloud
+    source: https://github.com/kubeflow/pipelines.git
+    source-subdir: backend/src/apiserver/visualization
